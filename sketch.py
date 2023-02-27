@@ -13,14 +13,15 @@ import pandas as pd
 
 from decision_matrix import decision_matrix
 
-DATA_PATH = r"./China Example/"
+DATA_PATH = r"./ROUND 1 Reviews/"
 
 files = [
     'ROUND 1 - CHINA_He_Hangfeng.xlsx',
     'ROUND 1 - CHINA_Li_Dongmei.xlsx',
-    'ROUND 1 - CHINA_LUO_Jiebo.xlsx'
+    'ROUND 1 - CHINA_LUO_Jiebo.xlsx',
+    'ROUND 1 - INDIA_Kahng_Anson.xlsx'
 ]
-
+files = os.listdir(DATA_PATH)
 gpa_pattern = re.compile(r'\d.[\d]+')
 dtype_map = {"GPA 1": str}
 
@@ -37,6 +38,7 @@ rename_columns = {
 # these columns will be lists
 reviewer_items = ["Reviewer Name", "Rating", "Highlights"]
 selected_cols = [
+    "Ref",
     "Rating",
     "Name", 
     "GPA 1", 
@@ -45,35 +47,49 @@ selected_cols = [
     "Highlights",
 ]
 
-#%%
-
-applicant_records = {}
-for file in files:
+def process_spreadsheet(excel_file) -> dict:
     excel_file = DATA_PATH + file
-    reviewer_name = " ".join(excel_file.rstrip(".xlsx").split("_")[-2:])
+    reviewer_name = " ".join(excel_file.rstrip(".xlsx").split("_")[1:])
     df = pd.read_excel(excel_file, header=1)
+    df.columns = [header.strip() for header in df.columns] # remove leading and trailing spaces
+    df = df.dropna(subset=["Ref"])
     df = df.rename(columns=rename_columns)
     df_sub = df[selected_cols]
     df_sub = df_sub.astype(dtype_map)
     df_sub["Reviewer Name"] = reviewer_name
     df_sub["GPA 1"] = df_sub["GPA 1"].apply(lambda x: float(gpa_pattern.match(x).group(0)) if gpa_pattern.match(x) else np.nan)
-    df_sub = df_sub.set_index(["Name", "GPA 1"])
+    df_sub = df_sub.set_index("Ref")
     record = df_sub.to_dict("index")
-    for applicant, data in record.items():
-        applicant_name, gpa = applicant
+    return record
+
+#%%
+
+applicant_records = {}
+for file in files:
+    if not file.endswith(".xlsx"):
+        print(f"{file} not in excel format.")
+        continue
+    excel_file = DATA_PATH + file
+    print(excel_file)
+    record = process_spreadsheet(excel_file)
+    
+    for applicant_id, data in record.items():
+        applicant_name = data["Name"]  
         
         # convert the columns in reviewer_items to lists
         for reviewer_item in reviewer_items:
             data[reviewer_item] = [data[reviewer_item]]
         reviewer_name = data["Reviewer Name"][0]
+        rating = data["Rating"][0]
         # check rating is an int
         try:
-            rating = int(data["Rating"][0])
+            rating = int(rating)
+            data["Rating"] = [rating]
         except ValueError:
-            print(f"invalid rating for {applicant_name} by {reviewer_name}.")
+            print(f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}.")
             continue
             
-        if applicant not in applicant_records:
+        if applicant_id not in applicant_records:
             reviewers_needed = 2
             if re.search("high gpa", data["Reader 2 Name"], re.IGNORECASE) is not None or re.search("high gpa", data["Reader 1 Name"], re.IGNORECASE) is not None:
                 reviewers_needed = 1
@@ -90,25 +106,22 @@ for file in files:
             else:
                 reviewers_needed = 2
                 recommeneded_action = "Need 2nd Rev"
-            applicant_records[applicant] = data
-            applicant_records[applicant]["reviewer_count"] = 1
-            applicant_records[applicant]["reviewers_needed"] = reviewers_needed
+            applicant_records[applicant_id] = data
+            applicant_records[applicant_id]["reviewer_count"] = 1
+            applicant_records[applicant_id]["reviewers_needed"] = reviewers_needed
          
         # second reviewer's rating
         else:
             # no applicant should be assigned to more than two reviewers
-            applicant_records[applicant]["reviewer_count"] += 1
-            if applicant_records[applicant]["reviewer_count"] > applicant_records[applicant]["reviewers_needed"]:
+            applicant_records[applicant_id]["reviewer_count"] += 1
+            if applicant_records[applicant_id]["reviewer_count"] > applicant_records[applicant_id]["reviewers_needed"]:
                 print(f"more reviewers than needed are assigned for {applicant_name}.")
                 continue
             
-            applicant_records[applicant]["Reviewer Name"].append(reviewer_name)
-            applicant_records[applicant]["Rating"].append(rating)
-            reviewer1_rating = applicant_records[applicant]["Rating"][0]
+            applicant_records[applicant_id]["Reviewer Name"].append(reviewer_name)
+            applicant_records[applicant_id]["Rating"].append(rating)
+            reviewer1_rating = applicant_records[applicant_id]["Rating"][0]
             recommeneded_action = decision_matrix[reviewer1_rating][rating]
             
-        applicant_records[applicant]["Recommended Action"] = recommeneded_action
+        applicant_records[applicant_id]["Recommended Action"] = recommeneded_action
         
-
-ratings = []
-reader2_comment = ""
