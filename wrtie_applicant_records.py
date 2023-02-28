@@ -7,7 +7,9 @@ Created on Mon Feb 27 09:26:01 2023
 
 import os
 import re
+import json
 import logging
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -16,15 +18,18 @@ from util_vars import decision_matrix, rename_columns, reviewer_items, selected_
 
 
 DATA_PATH = r"./ROUND 1 Reviews/"
-error_logger = logging.getLogger("error_logger")
-error_logger.setLevel('WARNING')
-file_handler = logging.FileHandler(filename=DATA_PATH+"errors.log", mode="w")
-error_logger.addHandler(file_handler)
+WRITE_PATH = DATA_PATH + "program_data/"
+log_file_path = WRITE_PATH + "errors.log"
+Path(WRITE_PATH).mkdir(parents=True, exist_ok=True)
 
-console_logger = logging.getLogger("console_logger")
-console_logger.setLevel('INFO')
-file_handler = logging.StreamHandler()
-console_logger.addHandler(file_handler)
+logger = logging.getLogger("logger")
+logging.getLogger().setLevel(logging.INFO)
+logger.propagate = False
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+file_handler = logging.FileHandler(filename=log_file_path, mode="w")
+file_handler.setFormatter(formatter)
+#file_handler.setLevel(logging.WARNING)
+logger.addHandler(file_handler)
 
 files = [
     'ROUND 1 - CHINA_He_Hangfeng.xlsx',
@@ -38,29 +43,36 @@ dtype_map = {"GPA 1": str}
 
 #%%
 def process_spreadsheet(excel_file) -> dict:
-    excel_file = DATA_PATH + file
     reviewer_name = " ".join(excel_file.rstrip(".xlsx").split("_")[1:])
     df = pd.read_excel(excel_file, header=1)
+    df = df.astype("string") # convert all data to string
+    df = df.fillna(np.nan).replace([np.nan], [None]) # replace all nan with None
     df.columns = [header.strip() for header in df.columns] # remove leading and trailing spaces
     df = df.dropna(subset=["Ref"])
     df = df.rename(columns=rename_columns)
-    df_sub = df[selected_cols]
+    try:
+        df_sub = df[selected_cols]
+    except KeyError:
+        logging.getLogger("logger").exception(f"{excel_file} not parsed successfully, maybe because the reviewer modified some column names.")
+        return {}
     df_sub = df_sub.astype(dtype_map)
     df_sub["Reviewer Name"] = reviewer_name
     df_sub["GPA 1"] = df_sub["GPA 1"].apply(lambda x: float(gpa_pattern.match(x).group(0)) if gpa_pattern.match(x) else np.nan)
     df_sub = df_sub.set_index("Ref")
-    record = df_sub.to_dict("index")
-    return record
+    return df_sub.to_dict("index")
 
 applicant_records = {}
 for file in files:
     if not file.endswith(".xlsx"):
-        error_logger.warning(f"{file} not in excel format.")
+        #print(file)
+        logging.getLogger("logger").critical(f"{file} not in excel format.\n")
         continue
     excel_file = DATA_PATH + file
-    console_logger.info(excel_file)
+    logging.info(file)
+    #print(excel_file)
     record = process_spreadsheet(excel_file)
-    
+    if not record: # if anything went wrong when parsing the excel file, skip
+        continue
     for applicant_id, data in record.items():
         applicant_name = data["Name"]  
         
@@ -73,8 +85,8 @@ for file in files:
         try:
             rating = int(rating)
             data["Rating"] = [rating]
-        except ValueError:
-            error_logger.warning(f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}.")
+        except (ValueError, TypeError):
+            logging.getLogger("logger").warning(f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}.")
             continue
             
         if applicant_id not in applicant_records:
@@ -95,15 +107,15 @@ for file in files:
                 reviewers_needed = 2
                 recommeneded_action = "Need 2nd Rev"
             applicant_records[applicant_id] = data
-            applicant_records[applicant_id]["reviewer_count"] = 1
-            applicant_records[applicant_id]["reviewers_needed"] = reviewers_needed
+            applicant_records[applicant_id]["Reviewer Count"] = 1
+            applicant_records[applicant_id]["Reviewers Needed"] = reviewers_needed
          
         # second reviewer's rating
         else:
             # no applicant should be assigned to more than two reviewers
-            applicant_records[applicant_id]["reviewer_count"] += 1
-            if applicant_records[applicant_id]["reviewer_count"] > applicant_records[applicant_id]["reviewers_needed"]:
-                error_logger.warning(f"more reviewers than needed are assigned for {applicant_name}.")
+            applicant_records[applicant_id]["Reviewer Count"] += 1
+            if applicant_records[applicant_id]["Reviewer Count"] > applicant_records[applicant_id]["Reviewers Needed"]:
+                logging.getLogger("logger").critical(f"more reviewers than needed are assigned for {applicant_name}.")
                 continue
             
             applicant_records[applicant_id]["Reviewer Name"].append(reviewer_name)
@@ -112,4 +124,12 @@ for file in files:
             recommeneded_action = decision_matrix[reviewer1_rating][rating]
             
         applicant_records[applicant_id]["Recommended Action"] = recommeneded_action
+    
+with open(WRITE_PATH + "applicant_records.json", "w") as outfile1:
+    json.dump(applicant_records, outfile1, indent=2)
+
+handlers = logger.handlers
+for handler in handlers:
+    logger.removeHandler(handler)
+    handler.close()
        
