@@ -12,7 +12,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from decision_matrix import decision_matrix
+from util_vars import decision_matrix, rename_columns, reviewer_items, selected_cols
 
 
 DATA_PATH = r"./ROUND 1 Reviews/"
@@ -35,59 +35,6 @@ files = [
 files = os.listdir(DATA_PATH)
 gpa_pattern = re.compile(r'\d.[\d]+')
 dtype_map = {"GPA 1": str}
-
-#%% Samuel TODO ###
-# refer to the request list at https://docs.google.com/document/d/1AuXrk_64MoJz_aQwfpzxk1XVGMSTGWbgeMT4Rnq2Su4/edit#
-# add the columns below that you think we can add. Mark the ones that are not reasonable. 
-rename_columns = {
-        "On a scale of 1-5, do you think this student will succeed in our curriculum  (see RUBRIC) (1= Deny, 2= additional review needed,  3=waitlist,  4= Accept 5= Strong Accept and increase scholarship)": "Rating",
-        "any notes that make this highlight this candidate": "Highlights",
-        "Institution 1 GPA (4.0 Scale)": "GPA 1", "Institution 1 Level of Study": "Level of Study 1", "Institution 1 Name": "Institution Name 1", "School 1 Country": "School 1 Country","Institution 1 Degree": "Degree", "Institution 1 Date Conferred": "Date Conferred 1",       "Institution 1 Major": "Major 1", "Citizenship1": "Citizenship1", "Test Date": "Test Date", "Verified":"Verified", 
-"TOEFL Total":"TOEFL Total", "TOEFL Speaking":"TOEFL Speaking", "IELTS Test Date":"IELTS Test Date", "IELTS Verified":"IELTS Verified", "IELTS Total": "IELTS Total", "IELTS Speaking":"IELTS Speaking", "GRE Test Date":"GRE Test Date", "GRE Verified":"GRE Verified", "GRE Quantitative": "GRE Quantitative", "GRE Quantitative Percentile": "Quantitative Percentile", "GRE Verbal":"GRE Verbal", "GRE Verbal Percentile":"Verbal Percentile", "GRE Analytical Writing": "Analytical Writing", "GRE Analytical Writing Percentile":"Analytical Writing Percentile", "Sex":"Sex", "Age":"Age", "Institution 2 Level of Study": "Level of Study 2","School 2 Country": "School 2 Country", "Institution 2 Name": "Institution Name 2", "Institution 2 Major":"Major 2", "Institution 2 Date Conferred": "Date Conferred 2", "Institution 2 GPA (4.0 Scale)": "GPA 2"
-}
-
-# these columns will be lists
-reviewer_items = ["Reviewer Name", "Rating", "Highlights"]
-selected_cols = [
-    "Ref",
-    "Rating",
-    "Name", 
-    "GPA 1", 
-    "Reader 2 Name",
-    "Reader 1 Name",
-    "Highlights",
-    "Level of Study 1",
-    "Institution Name 1",
-    "School 1 Country",
-    "Degree 1", 
-    "Date Conferred 1",
-    "Major 1",
-    "Citizenship1",
-    "Test Date", 
-    "Verified",
-    "TOEFL Total", 
-    "TOEFL Speaking",
-    "IELTS Test Date",
-    "IELTS Verified", 
-    "IELTS Total", 
-    "IELTS Speaking", 
-    "GRE Test Date", 
-    "GRE Verified",
-    "GRE Quantitative", 
-    "Quantitative Percentile", 
-    "GRE Verbal", 
-    "Verbal Percentile", 
-    "Analytical Writing", 
-    "Analytical Writing Percentile", 
-    "Sex", 
-    "Age", 
-    "Level of Study 2",
-    "School 2 Country", 
-    "Institution Name 2",
-    "Major 2", 
-    "Date Conferred 2", 
-    "GPA 2"
-]
 
 #%%
 def process_spreadsheet(excel_file) -> dict:
