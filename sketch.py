@@ -7,13 +7,24 @@ Created on Mon Feb 27 09:26:01 2023
 
 import os
 import re
+import logging
 
 import numpy as np
 import pandas as pd
 
 from decision_matrix import decision_matrix
 
+
 DATA_PATH = r"./ROUND 1 Reviews/"
+error_logger = logging.getLogger("error_logger")
+error_logger.setLevel('WARNING')
+file_handler = logging.FileHandler(filename=DATA_PATH+"errors.log", mode="w")
+error_logger.addHandler(file_handler)
+
+console_logger = logging.getLogger("console_logger")
+console_logger.setLevel('INFO')
+file_handler = logging.StreamHandler()
+console_logger.addHandler(file_handler)
 
 files = [
     'ROUND 1 - CHINA_He_Hangfeng.xlsx',
@@ -34,7 +45,6 @@ rename_columns = {
         "Institution 1 GPA (4.0 Scale)": "GPA 1",
 }
 
-
 # these columns will be lists
 reviewer_items = ["Reviewer Name", "Rating", "Highlights"]
 selected_cols = [
@@ -47,6 +57,7 @@ selected_cols = [
     "Highlights",
 ]
 
+#%%
 def process_spreadsheet(excel_file) -> dict:
     excel_file = DATA_PATH + file
     reviewer_name = " ".join(excel_file.rstrip(".xlsx").split("_")[1:])
@@ -62,15 +73,13 @@ def process_spreadsheet(excel_file) -> dict:
     record = df_sub.to_dict("index")
     return record
 
-#%%
-
 applicant_records = {}
 for file in files:
     if not file.endswith(".xlsx"):
-        print(f"{file} not in excel format.")
+        error_logger.warning(f"{file} not in excel format.")
         continue
     excel_file = DATA_PATH + file
-    print(excel_file)
+    console_logger.info(excel_file)
     record = process_spreadsheet(excel_file)
     
     for applicant_id, data in record.items():
@@ -86,7 +95,7 @@ for file in files:
             rating = int(rating)
             data["Rating"] = [rating]
         except ValueError:
-            print(f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}.")
+            error_logger.warning(f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}.")
             continue
             
         if applicant_id not in applicant_records:
@@ -115,7 +124,7 @@ for file in files:
             # no applicant should be assigned to more than two reviewers
             applicant_records[applicant_id]["reviewer_count"] += 1
             if applicant_records[applicant_id]["reviewer_count"] > applicant_records[applicant_id]["reviewers_needed"]:
-                print(f"more reviewers than needed are assigned for {applicant_name}.")
+                error_logger.warning(f"more reviewers than needed are assigned for {applicant_name}.")
                 continue
             
             applicant_records[applicant_id]["Reviewer Name"].append(reviewer_name)
@@ -124,4 +133,4 @@ for file in files:
             recommeneded_action = decision_matrix[reviewer1_rating][rating]
             
         applicant_records[applicant_id]["Recommended Action"] = recommeneded_action
-        
+       
