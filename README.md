@@ -18,5 +18,5 @@ cd /Users/yourusername/Documents/Student worker/GIDS
 ```
 + Once you are in the correct directory, you can run your file using the appropriate command for the programming language. For example: For Python files, you can run the file using the command: 
 ```
-python run_admission_assistant.py "data folder path"
+python run_admission_assistant.py "data folder path(ie. ROUND 2)"
 ```
