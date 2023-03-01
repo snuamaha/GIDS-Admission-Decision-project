@@ -11,16 +11,7 @@ import xlsxwriter
 
 from util_vars import selected_cols
 
-selected_cols.remove("Ref")
-DATA_PATH = r"./ROUND 1 Reviews/"
-PROGRAM_DATA_PATH = DATA_PATH + "program_data/"
-write_path = PROGRAM_DATA_PATH
-
-with open(PROGRAM_DATA_PATH + "applicant_records.json", "r") as infile1:
-    applicant_records = json.load(infile1)
-    
-app = applicant_records["439935221"] 
-
+   
 headers1 = {
     "Name": "Applicant Name",
     "Rating": "Ratings",
@@ -48,55 +39,84 @@ floats = set(["GPA 1",
                ])
 
 
-workbook = xlsxwriter.Workbook(write_path + 'admission_recommendations.xlsx')
-worksheet = workbook.add_worksheet()
-
-format1 = workbook.add_format({'bg_color': 'red'})
-
-row = 0
-col = 0
-worksheet.write(row, col, "Ref")
-col += 1
-for header, renamed_header in headers1.items():
-    worksheet.write(row, col, renamed_header)
-    col += 1
+def main(data_path=r"./ROUND 1 Reviews/"):
+    program_data_path = data_path + "program_data/"
+    write_path = program_data_path
+    record_file = program_data_path + "applicant_records.json"
     
-col += 4
-for header in selected_cols:
-    if header in headers1:
-        continue
-    worksheet.write(row, col, header)
-    col += 1    
+    with open(record_file, "r") as infile1:
+        applicant_records = json.load(infile1)
+        
+    selected_cols.remove("Ref") 
+    workbook = xlsxwriter.Workbook(write_path + 'admission_recommendations.xlsx')
+    worksheet = workbook.add_worksheet()
     
-row += 1
-for ref, info in applicant_records.items():
+    worksheet.set_column(0, 0, 10)
+    worksheet.set_column(1, 1, 30) 
+    worksheet.set_column(3, 3, 20)
+    worksheet.set_column(5, 5, 18)
+    
+    header_format = workbook.add_format({'border': 2, 'bold': True})
+    deny_format = workbook.add_format({'bg_color': 'red'})
+    admit_format = workbook.add_format({'bg_color': 'green'})
+    wait_format = workbook.add_format({'bg_color': 'yellow'})
+    
+    row = 0
     col = 0
-    worksheet.write(row, col, ref)
+    worksheet.write(row, col, "Ref", header_format)
     col += 1
     for header, renamed_header in headers1.items():
-        values = info[header]
-        if isinstance(values, list):
-            values = ", ".join(str(value) for value in values)
-        worksheet.write(row, col, values)
+        worksheet.write(row, col, renamed_header, header_format)
         col += 1
+        
     col += 4
-    for field in selected_cols:
-        if field not in headers1:
-            values = info[field]
-            if isinstance(values, list):
-                values = ", ".join(str(value) for value in values)
-            try:    
-                worksheet.write(row, col, values)
-            except TypeError:
-                pass
-            col += 1
-    
+    for header in selected_cols:
+        if header in headers1:
+            continue
+        worksheet.write(row, col, header, header_format)
+        col += 1  
+        
     row += 1
-
-worksheet.conditional_format('F1:F203', {'type':     'text',
-                                       'criteria': 'containing',
-                                       'value':    'Deny',
-                                       'format':   format1})
-workbook.close()   
-
+    for ref, info in applicant_records.items():
+        col = 0
+        worksheet.write(row, col, ref, header_format)
+        col += 1
+        for header, renamed_header in headers1.items():
+            values = info[header]
+            if isinstance(values, list):
+                values = "; ".join(str(value) for value in values)
+            worksheet.write(row, col, values)
+            col += 1
+        col += 4
+        
+        for field in selected_cols:
+            if field not in headers1:
+                values = info[field]
+                if isinstance(values, list):
+                    values = "; ".join(str(value) for value in values)
+                try:    
+                    worksheet.write(row, col, values)
+                except TypeError:
+                    pass
+                col += 1
+        row += 1
     
+    worksheet.conditional_format(f'F1:F{row}', {'type':     'text',
+                                           'criteria': 'containing',
+                                           'value':    'Deny',
+                                           'format':   deny_format})
+    
+    worksheet.conditional_format(f'F1:F{row}', {'type':     'text',
+                                           'criteria': 'containing',
+                                           'value':    'Admit',
+                                           'format':   admit_format})
+    
+    worksheet.conditional_format(f'F1:F{row}', {'type':     'text',
+                                           'criteria': 'containing',
+                                           'value':    'Wait',
+                                           'format':   wait_format})
+    
+    workbook.close()   
+
+if __name__ == '__main__':
+    main()  
