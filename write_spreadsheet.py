@@ -5,6 +5,7 @@ Created on Tue Feb 28 15:04:37 2023
 @author: Yue
 """
 
+import os
 import json
 
 import xlsxwriter
@@ -40,15 +41,15 @@ floats = set(["GPA 1",
 
 
 def main(data_path=r"./ROUND 1 Reviews/"):
-    program_data_path = data_path + "program_data/"
+    program_data_path = os.path.join(data_path, "program_data/")
     write_path = program_data_path
-    record_file = program_data_path + "applicant_records.json"
+    record_file = os.path.join(program_data_path, "applicant_records.json")
     
     with open(record_file, "r") as infile1:
         applicant_records = json.load(infile1)
         
     selected_cols.remove("Ref") 
-    workbook = xlsxwriter.Workbook(write_path + 'admission_recommendations.xlsx')
+    workbook = xlsxwriter.Workbook(os.path.join(write_path, 'admission_recommendations.xlsx'))
     worksheet = workbook.add_worksheet()
     
     worksheet.set_column(0, 0, 10)

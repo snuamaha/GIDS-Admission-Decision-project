@@ -20,7 +20,7 @@ from util_vars import decision_matrix, rename_columns, reviewer_items, selected_
 gpa_pattern = re.compile(r'\d.[\d]+')
 
 def process_spreadsheet(excel_file) -> dict:
-    reviewer_name = " ".join(excel_file.rstrip(".xlsx").split("_")[1:])
+    reviewer_name = excel_file.rstrip(".xlsx").split(" - ")[-1]
     df = pd.read_excel(excel_file, header=1)
     df = df.astype("str") # convert all data to string
     df = df.fillna(np.nan).replace([np.nan], [None]) # replace all nan with None
@@ -97,10 +97,10 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
                 recommeneded_action = "Admit - Summer"
         applicant_records[applicant_id]["Recommended Action"] = recommeneded_action
 
-def main(data_path=r"./ROUND 1 Reviews/"):
-    WRITE_PATH = data_path + "program_data/"
-    log_file_path = WRITE_PATH + "errors.log"
-    Path(WRITE_PATH).mkdir(parents=True, exist_ok=True)
+def main(data_path=r"./ROUND 1 Reviews"):
+    write_path = os.path.join(data_path, "program_data/")
+    log_file_path = os.path.join(write_path, "errors.log")
+    Path(write_path).mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("logger")
     logging.getLogger().setLevel(logging.INFO)
     logger.propagate = False
@@ -116,7 +116,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
             #print(file)
             logging.getLogger("logger").critical(f"{file} not in excel format.\n")
             continue
-        excel_file = data_path + file
+        excel_file = os.path.join(data_path, file)
         logging.info(file)
         #print(excel_file)
         record = process_spreadsheet(excel_file)
@@ -124,7 +124,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
             continue
         make_admission_recommendation(record, applicant_records)
         
-    with open(WRITE_PATH + "applicant_records.json", "w") as outfile1:
+    with open(os.path.join(write_path, "applicant_records.json"), "w") as outfile1:
         json.dump(applicant_records, outfile1, indent=2)
     
     handlers = logger.handlers
