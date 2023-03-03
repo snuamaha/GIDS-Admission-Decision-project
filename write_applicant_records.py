@@ -49,14 +49,9 @@ def make_applicant_record(excel_file) -> dict:
     reviewer_name = excel_file.rstrip(".xlsx").split(" - ")[-1]
     df = pd.read_excel(excel_file, header=1)
     df.columns = [
-        header.strip() for header in df.columns
+        header.strip() if isinstance(header, str) else header for header in df.columns
     ]  # remove leading and trailing spaces
     df = df.rename(columns=rename_columns)
-    df = df.dropna(subset=["Ref"])
-    df = df.astype(dtype_map)
-    df = df.replace({np.nan: None})  # replace all nan with None
-    df = df.astype("str")  # convert all data to string
-
     existing_cols = set(df.columns)
     for col in selected_cols:
         if col not in existing_cols:
@@ -68,7 +63,13 @@ def make_applicant_record(excel_file) -> dict:
             logging.getLogger("logger").warning(
                 f"{col} is not present in spreadsheet from {reviewer_name}."
             )
-            df[col] = None
+            df[col] = np.nan
+
+    df = df.dropna(subset=["Ref"])
+    df = df.astype(dtype_map)
+    df = df.replace({np.nan: None})  # replace all nan with None
+    df = df.astype("str")  # convert all data to string
+    df = df.replace("None", "")
 
     df = df.assign(
         **{
@@ -76,7 +77,7 @@ def make_applicant_record(excel_file) -> dict:
             "GPA 1": df["GPA 1"].apply(
                 lambda x: float(gpa_pattern.match(x).group(0))
                 if gpa_pattern.match(x)
-                else np.nan
+                else ""
             ),
         }
     )
@@ -91,11 +92,18 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
         rating = data["Rating"]
 
         # to show the raw raing from the reviewer
+        legal_rating = True
         data["Raw Rating"] = rating
         # check rating is an int
         try:
-            rating = int(rating)
+            if int(float(rating)) == float(rating):
+                rating = int(float(rating))
+            else:
+                legal_rating = False
         except (ValueError, TypeError):
+            legal_rating = False
+
+        if not legal_rating:
             logging.getLogger("logger").warning(
                 f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}."
             )
@@ -171,7 +179,7 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
         applicant_records[applicant_id]["Suggested Scholarship"] = scholarship
 
 
-def main(data_path=r"./ROUND 1 Reviews"):
+def main(data_path):
     write_path = os.path.join(data_path, "program_data/")
     log_file_path = os.path.join(write_path, "errors.log")
     Path(write_path).mkdir(parents=True, exist_ok=True)
@@ -199,11 +207,11 @@ def main(data_path=r"./ROUND 1 Reviews"):
 
     n = 0
     for file in excel_files:
+        logging.info(f"parsing {file}")
         excel_file = os.path.join(data_path, file)
         record = make_applicant_record(excel_file)
         if not record:  # if anything went wrong when parsing the excel file, skip
             continue
-        logging.info(f"parsing {file}")
         make_admission_recommendation(record, applicant_records)
         n += 1
 
@@ -220,4 +228,4 @@ def main(data_path=r"./ROUND 1 Reviews"):
 
 
 if __name__ == "__main__":
-    main()
+    main(data_path=r"./ROUND 2 Reviews")
