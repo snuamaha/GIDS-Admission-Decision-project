@@ -15,12 +15,18 @@ Building a python program that takes a folder path consisting of Excel files and
  
   - Once the download is complete, extract the contents of the zip file to your desired location on your computer. 
   
-+ Open you Anaconda Command Prompt.
++ Open your Anaconda Command Prompt.
+
++ Activate the `admission_assistant` environment.
+```
+conda activate admission_assistant
+```
 
 + Type in the directory that contains the extracted files. For example, if the extracted files are located in the `DIRECTORY_CONTAINING_EXTRACTED_FILES` folder, you can navigate to that folder using the command. You can simply drag the folder to the shell as shown in the code:
 ```
 cd DIRECTORY_CONTAINING_EXTRACTED_FILES
 ```
+
 + Once you are in the correct directory, run the `run_admission_assistant.py` file using the following command:
 ```
 python run_admission_assistant.py FOLDER_CONTAINING_DATA
