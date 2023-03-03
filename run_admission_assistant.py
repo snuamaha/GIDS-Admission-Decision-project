@@ -6,6 +6,7 @@ Created on Tue Feb 28 23:46:47 2023
 """
 
 import os
+import logging
 import argparse
 
 import write_spreadsheet
@@ -24,10 +25,11 @@ if __name__ == "__main__":
     elif spreadsheets_dir:
         data_path = spreadsheets_dir[0]
     else:
-        print("No argument provided")
+        logging.error("No argument provided.")
 
-    if os.path.isdir(data_path):
+    
+    if os.path.isdir(data_path): # if not absolute path, try relative path  
         write_applicant_records.main(data_path)
-        write_spreadsheet.main(data_path)
+        write_spreadsheet.main(data_path)    
     else:
-        print("invalid spreadsheets directory.")
+        logging.error("invalid spreadsheets directory.")
