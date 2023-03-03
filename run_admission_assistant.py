@@ -27,9 +27,8 @@ if __name__ == "__main__":
     else:
         logging.error("No argument provided.")
 
-    
-    if os.path.isdir(data_path): # if not absolute path, try relative path  
+    if os.path.isdir(data_path):  # if not absolute path, try relative path
         write_applicant_records.main(data_path)
-        write_spreadsheet.main(data_path)    
+        write_spreadsheet.main(data_path)
     else:
         logging.error("invalid spreadsheets directory.")

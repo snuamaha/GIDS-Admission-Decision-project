@@ -14,11 +14,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from util_vars import decision_matrix, dtype_map, rename_columns, reviewer_items, selected_cols, necessary_cols
+from util_vars import (
+    decision_matrix,
+    dtype_map,
+    rename_columns,
+    reviewer_items,
+    selected_cols,
+    necessary_cols,
+)
 
 # TODO
-# 2. add scholarship
-# 4. check dtypes
+# 1. add scholarship
+# 2. add FRAUD
 
 gpa_pattern = re.compile(r"\d.[\d]+")
 
@@ -32,9 +39,9 @@ def make_applicant_record(excel_file) -> dict:
     df = df.rename(columns=rename_columns)
     df = df.dropna(subset=["Ref"])
     df = df.astype(dtype_map)
-    df = df.replace({np.nan: None}) # replace all nan with None
+    df = df.replace({np.nan: None})  # replace all nan with None
     df = df.astype("str")  # convert all data to string
-    
+
     existing_cols = set(df.columns)
     for col in selected_cols:
         if col not in existing_cols:
@@ -44,7 +51,7 @@ def make_applicant_record(excel_file) -> dict:
                 )
                 return {}
             df[col] = None
-    
+
     df = df.assign(
         **{
             "Reviewer Name": reviewer_name,
@@ -62,23 +69,27 @@ def make_applicant_record(excel_file) -> dict:
 def make_admission_recommendation(record: dict, applicant_records: dict) -> None:
     for applicant_id, data in record.items():
         applicant_name = data["Name"]
+        reviewer_name = data["Reviewer Name"]
+        rating = data["Rating"]
 
-        # convert the columns in reviewer_items to lists
-        for reviewer_item in reviewer_items:
-            data[reviewer_item] = [data[reviewer_item]]
-        reviewer_name = data["Reviewer Name"][0]
-        rating = data["Rating"][0]
+        # to show the raw raing from the reviewer
+        data["Raw Rating"] = rating
         # check rating is an int
         try:
             rating = int(rating)
-            data["Rating"] = [rating]
         except (ValueError, TypeError):
             logging.getLogger("logger").warning(
                 f"invalid rating, {rating}, for {applicant_name} by {reviewer_name}."
             )
-            continue
+            rating = "other"
 
+        data["Rating"] = rating
         if applicant_id not in applicant_records:
+            applicant_records[applicant_id] = data
+            for reviewer_item in reviewer_items:
+                item = applicant_records[applicant_id][reviewer_item]
+                applicant_records[applicant_id][reviewer_item] = [item]
+
             reviewers_needed = 2
             if (
                 re.search("only one", data["Reader 2 Name"], re.IGNORECASE) is not None
@@ -108,7 +119,7 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
             else:
                 reviewers_needed = 2
                 recommeneded_action = "Need 2nd Rev"
-            applicant_records[applicant_id] = data
+
             applicant_records[applicant_id]["Reviewer Count"] = 1
             applicant_records[applicant_id]["Reviewers Needed"] = reviewers_needed
 
@@ -125,8 +136,11 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
                 )
                 continue
 
-            applicant_records[applicant_id]["Reviewer Name"].append(reviewer_name)
-            applicant_records[applicant_id]["Rating"].append(rating)
+            for reviewer_item in reviewer_items:
+                applicant_records[applicant_id][reviewer_item].append(
+                    data[reviewer_item]
+                )
+
             reviewer1_rating = applicant_records[applicant_id]["Rating"][0]
             recommeneded_action = decision_matrix[reviewer1_rating][rating]
 
@@ -153,7 +167,7 @@ def main(data_path=r"./ROUND 1 Reviews"):
     n = 0
     for file in os.listdir(data_path):
         if not os.path.isfile(os.path.join(data_path, file)):
-            continue  
+            continue
         if file.endswith(".xlsx"):
             excel_files.append(file)
         else:
@@ -161,7 +175,7 @@ def main(data_path=r"./ROUND 1 Reviews"):
             logging.critical(f"{file} not in xlsx format.\n")
         n += 1
     logging.info(f"{len(excel_files)}/{n} files are in xlsx format.\n")
-    
+
     n = 0
     for file in excel_files:
         excel_file = os.path.join(data_path, file)

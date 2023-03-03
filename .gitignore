@@ -1,3 +1,4 @@
 **/*.xlsx
 **/*.log
+**/sketch*
 __pycache__/

@@ -16,7 +16,7 @@ from util_vars import selected_cols
 
 headers1 = {
     "Name": "Applicant Name",
-    "Rating": "Ratings",
+    "Raw Rating": "Ratings",
     "Reviewer Name": "Reviewer Names",
     "Highlights": "Highlights",
     "Recommended Action": "Recommended Action",
@@ -56,6 +56,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
         applicant_records = json.load(infile1)
 
     selected_cols.remove("Ref")
+    selected_cols.remove("Rating")
     logging.info("Preparing the admission decision spreadsheet...")
     workbook = xlsxwriter.Workbook(
         os.path.join(write_path, "admission_recommendations.xlsx")
@@ -77,6 +78,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     col = 0
     worksheet.write(row, col, "Ref", header_format)
     col += 1
+    # write headers
     for header, renamed_header in headers1.items():
         worksheet.write(row, col, renamed_header, header_format)
         col += 1
@@ -89,6 +91,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
         worksheet.write(row, col, header, header_format)
         col += 1
 
+    # fill in the values
     row += 1
     for ref, info in applicant_records.items():
         col = 0
@@ -147,6 +150,6 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     workbook.close()
     logging.info("Done.")
 
+
 if __name__ == "__main__":
     main()
-    
