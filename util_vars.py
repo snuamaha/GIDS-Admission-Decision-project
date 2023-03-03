@@ -145,6 +145,7 @@ selected_cols = [
     "GPA 1",
     "Reader 2 Name",
     "Reader 1 Name",
+    "FRAUD",
     "Ever failed a course",
     "Ever failed a course? Explaination",
     "1 Year of Calc",
