@@ -14,44 +14,49 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from util_vars import decision_matrix, rename_columns, reviewer_items, selected_cols
+from util_vars import decision_matrix, dtype_map, rename_columns, reviewer_items, selected_cols, necessary_cols
 
+# TODO
+# 2. add scholarship
+# 4. check dtypes
 
 gpa_pattern = re.compile(r"\d.[\d]+")
 
 
-def process_spreadsheet(excel_file) -> dict:
+def make_applicant_record(excel_file) -> dict:
     reviewer_name = excel_file.rstrip(".xlsx").split(" - ")[-1]
     df = pd.read_excel(excel_file, header=1)
-    df = df.astype("str")  # convert all data to string
-    df = df.fillna(np.nan).replace([np.nan], [None])  # replace all nan with None
     df.columns = [
         header.strip() for header in df.columns
     ]  # remove leading and trailing spaces
-    df = df.dropna(subset=["Ref"])
     df = df.rename(columns=rename_columns)
-    try:
-        df_sub = df[
-            selected_cols
-        ]  # Samuel TODO: think of a way to make this line more flexible, eg., "profociency" vs "proficiency"
-    except KeyError:
-        logging.getLogger("logger").exception(
-            f"{excel_file} not parsed successfully, maybe because the reviewer modified some column names."
-        )
-        return {}
-
-    df_sub = df_sub.assign(
+    df = df.dropna(subset=["Ref"])
+    df = df.astype(dtype_map)
+    df = df.replace({np.nan: None}) # replace all nan with None
+    df = df.astype("str")  # convert all data to string
+    
+    existing_cols = set(df.columns)
+    for col in selected_cols:
+        if col not in existing_cols:
+            if col in necessary_cols:
+                logging.getLogger("logger").exception(
+                    f"{excel_file} not parsed successfully because the reviewer modified the name Ref or Rating header."
+                )
+                return {}
+            df[col] = None
+    
+    df = df.assign(
         **{
             "Reviewer Name": reviewer_name,
-            "GPA 1": df_sub["GPA 1"].apply(
+            "GPA 1": df["GPA 1"].apply(
                 lambda x: float(gpa_pattern.match(x).group(0))
                 if gpa_pattern.match(x)
                 else np.nan
             ),
         }
     )
-    df_sub = df_sub.set_index("Ref")
-    return df_sub.to_dict("index")
+    df = df.set_index("Ref")
+    return df.to_dict("index")
 
 
 def make_admission_recommendation(record: dict, applicant_records: dict) -> None:
@@ -76,8 +81,8 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
         if applicant_id not in applicant_records:
             reviewers_needed = 2
             if (
-                re.search("high gpa", data["Reader 2 Name"], re.IGNORECASE) is not None
-                or re.search("high gpa", data["Reader 1 Name"], re.IGNORECASE)
+                re.search("only one", data["Reader 2 Name"], re.IGNORECASE) is not None
+                or re.search("only one", data["Reader 1 Name"], re.IGNORECASE)
                 is not None
             ):
                 reviewers_needed = 1
@@ -144,25 +149,31 @@ def main(data_path=r"./ROUND 1 Reviews"):
     logger.addHandler(file_handler)
 
     applicant_records = {}
-    files = os.listdir(data_path)
-    logging.info(f"{len(files)} spreadsheets in total.")
+    excel_files = []
     n = 0
-    for file in files:
-        if not file.endswith(".xlsx"):
-            # print(file)
-            logging.getLogger("logger").critical(f"{file} not in excel format.\n")
-            continue
+    for file in os.listdir(data_path):
+        if not os.path.isfile(os.path.join(data_path, file)):
+            continue  
+        if file.endswith(".xlsx"):
+            excel_files.append(file)
+        else:
+            logging.getLogger("logger").critical(f"{file} not in xlsx format.\n")
+            logging.critical(f"{file} not in xlsx format.\n")
+        n += 1
+    logging.info(f"{len(excel_files)}/{n} files are in xlsx format.\n")
+    
+    n = 0
+    for file in excel_files:
         excel_file = os.path.join(data_path, file)
-        logging.info(file)
-        # print(excel_file)
-        record = process_spreadsheet(excel_file)
+        record = make_applicant_record(excel_file)
         if not record:  # if anything went wrong when parsing the excel file, skip
             continue
+        logging.info(f"parsing {file}")
         make_admission_recommendation(record, applicant_records)
         n += 1
 
     logging.info(
-        f"{n}/{len(files)} spreadsheets read successfully. See errors.log for any errors."
+        f"{n}/{len(excel_files)} xlsx files read successfully. See errors.log for any errors.\n"
     )
     with open(os.path.join(write_path, "applicant_records.json"), "w") as outfile1:
         json.dump(applicant_records, outfile1, indent=2)

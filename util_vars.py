@@ -41,9 +41,15 @@ decision_matrix = {
     5: {1: "Discuss", 2: "Look Again", 3: "Discuss", 4: "Admit", 5: "Admit"},
 }
 
-#%% Samuel Done ###
-# refer to the request list at https://docs.google.com/document/d/1AuXrk_64MoJz_aQwfpzxk1XVGMSTGWbgeMT4Rnq2Su4/edit#
-# add the columns below that you think we can add. Mark the ones that are not reasonable.
+# see this SO post: https://stackoverflow.com/questions/21287624/convert-pandas-column-containing-nans-to-dtype-int
+dtype_map = {"Ref": 'Int64',
+             "TOEFL Total": 'Int64',
+             "TOEFL Speaking": 'Int64',
+             "GRE Quantitative": 'Int64',
+             "GRE Verbal": 'Int64',
+             "Age": 'Int64',
+             }
+
 rename_columns = {
     "On a scale of 1-5, do you think this student will succeed in our curriculum  (see RUBRIC) (1= Deny, 2= additional review needed,  3=waitlist,  4= Accept 5= Strong Accept and increase scholarship)": "Rating",
     "any notes that make this highlight this candidate": "Highlights",
@@ -79,6 +85,8 @@ reviewer_items = [
     "Rating",
     "Highlights",
 ]
+
+necessary_cols = ["Ref", "Rating"]
 
 selected_cols = [
     "Ref",
@@ -132,5 +140,3 @@ selected_cols = [
     "Date Conferred 2",
     "GPA 2",
 ]
-
-#%%

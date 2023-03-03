@@ -7,6 +7,7 @@ Created on Tue Feb 28 15:04:37 2023
 
 import os
 import json
+import logging
 
 import xlsxwriter
 
@@ -55,6 +56,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
         applicant_records = json.load(infile1)
 
     selected_cols.remove("Ref")
+    logging.info("Preparing the admission decision spreadsheet...")
     workbook = xlsxwriter.Workbook(
         os.path.join(write_path, "admission_recommendations.xlsx")
     )
@@ -64,6 +66,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     worksheet.set_column(1, 1, 30)
     worksheet.set_column(3, 3, 20)
     worksheet.set_column(5, 5, 18)
+    worksheet.set_column(6, 6, 30)
 
     header_format = workbook.add_format({"border": 2, "bold": True})
     deny_format = workbook.add_format({"bg_color": "red"})
@@ -77,8 +80,9 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     for header, renamed_header in headers1.items():
         worksheet.write(row, col, renamed_header, header_format)
         col += 1
+    worksheet.write(row, col, "Gap", header_format)
 
-    col += 4
+    col += 1
     for header in selected_cols:
         if header in headers1:
             continue
@@ -96,7 +100,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
                 values = "; ".join(str(value) for value in values)
             worksheet.write(row, col, values)
             col += 1
-        col += 4
+        col += 1
 
         for field in selected_cols:
             if field not in headers1:
@@ -141,7 +145,8 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     )
 
     workbook.close()
-
+    logging.info("Done.")
 
 if __name__ == "__main__":
     main()
+    
