@@ -13,6 +13,7 @@ decision_matrix = {
         3: "Wait - High",
         4: "Admit",
         5: "Admit",
+        "other": "Invalid Rating present",
     },
     "2nd_rev_if_needed": {
         1: "Deny",
@@ -20,6 +21,7 @@ decision_matrix = {
         3: "Wait - Low",
         4: "Send to 2nd Rev",
         5: "Send to 2nd Rev",
+        "other": "Invalid Rating present",
     },
     "missing_2nd_rev": {
         1: "Need 2nd Rev",
@@ -27,28 +29,67 @@ decision_matrix = {
         3: "Need 2nd Rev",
         4: "Need 2nd Rev",
         5: "Need 2nd Rev",
+        "other": "Invalid Rating present",
     },
-    1: {1: "Deny", 2: "Look Again", 3: "Discuss", 4: "Discuss", 5: "Discuss"},
+    1: {
+        1: "Deny",
+        2: "Look Again",
+        3: "Discuss",
+        4: "Discuss",
+        5: "Discuss",
+        "other": "Invalid Rating present",
+    },
     2: {
         1: "Look Again",
         2: "Look Again",
         3: "Look Again",
         4: "Wait - High",
         5: "Discuss",
+        "other": "Invalid Rating present",
     },
-    3: {1: "Discuss", 2: "Look Again", 3: "Wait - Low", 4: "Discuss", 5: "Discuss"},
-    4: {1: "Discuss", 2: "Look Again", 3: "Wait - High", 4: "Admit", 5: "Admit"},
-    5: {1: "Discuss", 2: "Look Again", 3: "Discuss", 4: "Admit", 5: "Admit"},
+    3: {
+        1: "Discuss",
+        2: "Look Again",
+        3: "Wait - Low",
+        4: "Discuss",
+        5: "Discuss",
+        "other": "Invalid Rating present",
+    },
+    4: {
+        1: "Discuss",
+        2: "Look Again",
+        3: "Wait - High",
+        4: "Admit",
+        5: "Admit",
+        "other": "Invalid Rating present",
+    },
+    5: {
+        1: "Discuss",
+        2: "Look Again",
+        3: "Discuss",
+        4: "Admit",
+        5: "Admit",
+        "other": "Invalid Rating present",
+    },
+    "other": {
+        1: "Invalid Rating present",
+        2: "Invalid Rating present",
+        3: "Invalid Rating present",
+        4: "Invalid Rating present",
+        5: "Invalid Rating present",
+        "other": "Invalid Rating present",
+    },
 }
 
 # see this SO post: https://stackoverflow.com/questions/21287624/convert-pandas-column-containing-nans-to-dtype-int
-dtype_map = {"Ref": 'Int64',
-             "TOEFL Total": 'Int64',
-             "TOEFL Speaking": 'Int64',
-             "GRE Quantitative": 'Int64',
-             "GRE Verbal": 'Int64',
-             "Age": 'Int64',
-             }
+dtype_map = {
+    "Ref": "Int64",
+    "TOEFL Total": "Int64",
+    "TOEFL Speaking": "Int64",
+    "GRE Quantitative": "Int64",
+    "GRE Verbal": "Int64",
+    "Age": "Int64",
+}
 
 rename_columns = {
     "On a scale of 1-5, do you think this student will succeed in our curriculum  (see RUBRIC) (1= Deny, 2= additional review needed,  3=waitlist,  4= Accept 5= Strong Accept and increase scholarship)": "Rating",
@@ -83,7 +124,15 @@ rename_columns = {
 reviewer_items = [
     "Reviewer Name",
     "Rating",
+    "Raw Rating",
     "Highlights",
+    "Math Proficiency",
+    "Stats Proficiency",
+    "Programming Proficiency",
+    "Data Structure Proficiency",
+    "Communications Skills",
+    "Applied data science skills",
+    "References",
 ]
 
 necessary_cols = ["Ref", "Rating"]
