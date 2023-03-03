@@ -20,6 +20,7 @@ headers1 = {
     "Reviewer Name": "Reviewer Names",
     "Highlights": "Highlights",
     "Recommended Action": "Recommended Action",
+    "Suggested Scholarship": "Suggested Scholarship",
 }
 
 dates = set(
@@ -66,13 +67,19 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     worksheet.set_column(0, 0, 10)
     worksheet.set_column(1, 1, 30)
     worksheet.set_column(3, 3, 20)
-    worksheet.set_column(5, 5, 18)
-    worksheet.set_column(6, 6, 30)
+    worksheet.set_column(4, 4, 10)
+    worksheet.set_column(5, 5, 20)
+    worksheet.set_column(6, 6, 19)
+    worksheet.set_column(7, 7, 10)  # Gap
+
+    worksheet.set_column(8, 8, 12)
 
     header_format = workbook.add_format({"border": 2, "bold": True})
     deny_format = workbook.add_format({"bg_color": "red"})
     admit_format = workbook.add_format({"bg_color": "green"})
     wait_format = workbook.add_format({"bg_color": "yellow"})
+    fraud_format = workbook.add_format({"bg_color": "red"})
+    gpa_format = workbook.add_format({"bg_color": "red"})
 
     row = 0
     col = 0
@@ -103,7 +110,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
                 values = "; ".join(str(value) for value in values)
             worksheet.write(row, col, values)
             col += 1
-        col += 1
+        col += 1  # mind the gap!
 
         for field in selected_cols:
             if field not in headers1:
@@ -144,6 +151,24 @@ def main(data_path=r"./ROUND 1 Reviews/"):
             "criteria": "containing",
             "value": "Wait",
             "format": wait_format,
+        },
+    )
+
+    worksheet.conditional_format(
+        f"M1:M{row}",
+        {
+            "type": "no_blanks",
+            "format": fraud_format,
+        },
+    )
+
+    worksheet.conditional_format(
+        f"J1:J{row}",
+        {
+            "type": "cell",
+            "criteria": "greater than or equal to",
+            "value": 4,
+            "format": gpa_format,
         },
     )
 

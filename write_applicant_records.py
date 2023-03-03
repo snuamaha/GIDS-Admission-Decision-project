@@ -23,11 +23,26 @@ from util_vars import (
     necessary_cols,
 )
 
-# TODO
-# 1. add scholarship
-# 2. add FRAUD
-
 gpa_pattern = re.compile(r"\d.[\d]+")
+
+
+def assign_scholarship(gpa):
+    scholarship = None
+    try:
+        gpa = float(gpa)
+    except (ValueError, TypeError):
+        return scholarship
+    if gpa >= 4.0:
+        pass
+    elif gpa > 3.8:
+        scholarship = "45%"
+    elif gpa > 3.5:
+        scholarship = "40%"
+    elif gpa > 3.3:
+        scholarship = "30%"
+    elif gpa > 3.0:
+        scholarship = "25%"
+    return scholarship
 
 
 def make_applicant_record(excel_file) -> dict:
@@ -50,6 +65,9 @@ def make_applicant_record(excel_file) -> dict:
                     f"{excel_file} not parsed successfully because the reviewer modified the name Ref or Rating header."
                 )
                 return {}
+            logging.getLogger("logger").warning(
+                f"{col} is not present in spreadsheet from {reviewer_name}."
+            )
             df[col] = None
 
     df = df.assign(
@@ -144,10 +162,13 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
             reviewer1_rating = applicant_records[applicant_id]["Rating"][0]
             recommeneded_action = decision_matrix[reviewer1_rating][rating]
 
+        scholarship = None
         if recommeneded_action == "Admit":
+            scholarship = assign_scholarship(applicant_records[applicant_id]["GPA 1"])
             if applicant_records[applicant_id]["Data Structures course"] == "No":
                 recommeneded_action = "Admit - Summer"
         applicant_records[applicant_id]["Recommended Action"] = recommeneded_action
+        applicant_records[applicant_id]["Suggested Scholarship"] = scholarship
 
 
 def main(data_path=r"./ROUND 1 Reviews"):
