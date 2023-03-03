@@ -7,7 +7,7 @@ Created on Sun Feb 26 18:26:54 2023
 
 
 decision_matrix = {
-    "high_gpa": {
+    "only_one": {
         1: "Discuss",
         2: "Look Again",
         3: "Wait - High",
@@ -43,15 +43,15 @@ decision_matrix = {
         1: "Look Again",
         2: "Look Again",
         3: "Look Again",
-        4: "Wait - High",
-        5: "Discuss",
+        4: "Look Again",
+        5: "Look Again",
         "other": "Invalid Rating present",
     },
     3: {
         1: "Discuss",
         2: "Look Again",
         3: "Wait - Low",
-        4: "Discuss",
+        4: "Wait - High",
         5: "Discuss",
         "other": "Invalid Rating present",
     },

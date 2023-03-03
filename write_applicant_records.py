@@ -123,7 +123,7 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
                 is not None
             ):
                 reviewers_needed = 1
-                review_case = "high_gpa"
+                review_case = "only_one"
                 recommeneded_action = decision_matrix[review_case][rating]
             elif (
                 re.search("2nd rev.*?needed", data["Reader 2 Name"], re.IGNORECASE)
