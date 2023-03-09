@@ -66,11 +66,11 @@ def make_applicant_record(excel_file) -> dict:
             df[col] = np.nan
 
     df = df.dropna(subset=["Ref"])
+
     df = df.astype(dtype_map)
     df = df.replace({np.nan: None})  # replace all nan with None
     df = df.astype("str")  # convert all data to string
     df = df.replace("None", "")
-
     df = df.assign(
         **{
             "Reviewer Name": reviewer_name,
@@ -81,6 +81,11 @@ def make_applicant_record(excel_file) -> dict:
             ),
         }
     )
+    if not df["Ref"].is_unique:
+        df = df.drop_duplicates(subset=["Ref"])
+        logging.getLogger("logger").critical(
+            f"There are duplicates in column Ref in {reviewer_name} spreadsheet."
+        )
     df = df.set_index("Ref")
     return df.to_dict("index")
 
@@ -158,7 +163,7 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
                 > applicant_records[applicant_id]["Reviewers Needed"]
             ):
                 logging.getLogger("logger").critical(
-                    f"more reviewers than needed are assigned for {applicant_name}."
+                    f"more reviewers than needed are assigned for {applicant_name}; Ref:{applicant_id}; existing reviewers: {applicant_records[applicant_id]['Reviewer Name']}; extra reviwer: {reviewer_name}."
                 )
                 continue
 
