@@ -21,6 +21,8 @@ headers1 = {
     "Highlights": "Highlights",
     "Recommended Action": "Recommended Action",
     "Suggested Scholarship": "Suggested Scholarship",
+    "Reviewer 1 Rating": 7,  # New column for Reviewer 1 Rating
+    "Reviewer 2 Rating": 8,  # New column for Reviewer 2 Rating
 }
 
 dates = set(
@@ -102,13 +104,22 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     row += 1
     for ref, info in applicant_records.items():
         col = 0
-        worksheet.write(row, col, ref, header_format)
+        worksheet.write(int(row), col, ref, header_format)
         col += 1
         for header, renamed_header in headers1.items():
-            values = info[header]
+            values = info.get(header, "")  # Use get() to avoid KeyError
             if isinstance(values, list):
                 values = "; ".join(str(value) for value in values)
-            worksheet.write(row, col, values)
+            worksheet.write(int(row), col, values)
+            
+            # Add Reviewer 1 and Reviewer 2 Ratings to separate columns
+            if header == "Raw Rating":
+                rating_values = info.get("Rating", [])
+                reviewer1_rating = rating_values[0] if len(rating_values) > 0 else ""
+                reviewer2_rating = rating_values[1] if len(rating_values) > 1 else ""
+                worksheet.write(int(row), headers1["Reviewer 1 Rating"], reviewer1_rating)
+                worksheet.write(int(row), headers1["Reviewer 2 Rating"], reviewer2_rating)
+            
             col += 1
         col += 1  # mind the gap!
 
@@ -118,7 +129,7 @@ def main(data_path=r"./ROUND 1 Reviews/"):
                 if isinstance(values, list):
                     values = "; ".join(str(value) for value in values)
                 try:
-                    worksheet.write(row, col, values)
+                    worksheet.write(int(row), col, values)  # Convert row to int
                 except TypeError:
                     pass
                 col += 1
