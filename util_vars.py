@@ -92,6 +92,7 @@ dtype_map = {
 }
 
 rename_columns = {
+    "FRAUD detected? (1, 2 or 3)": "FRAUD",
     "On a scale of 1-5, do you think this student will succeed in our curriculum  (see RUBRIC) (1= Deny, 2= additional review needed,  3=waitlist,  4= Accept 5= Strong Accept and increase scholarship)": "Rating",
     "any notes that make this highlight this candidate": "Highlights",
     "Have you ever failed a course?": "Ever failed a course",
@@ -138,6 +139,7 @@ reviewer_items = [
 necessary_cols = ["Ref", "Rating"]
 
 selected_cols = [
+    "FRAUD",
     "Ref",
     "Rating",
     "Name",
@@ -145,7 +147,6 @@ selected_cols = [
     "GPA 1",
     "Reader 2 Name",
     "Reader 1 Name",
-    "FRAUD",
     "Ever failed a course",
     "Ever failed a course? Explaination",
     "1 Year of Calc",

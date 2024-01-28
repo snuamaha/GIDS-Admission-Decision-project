@@ -56,8 +56,6 @@ def make_applicant_record(excel_file) -> dict:
     df.columns = [
         header.strip() if isinstance(header, str) else header for header in df.columns
     ]  # remove leading and trailing spaces
-
-    #Renames the columns
     df = df.rename(columns=rename_columns)
     
     #Check for missing columns
