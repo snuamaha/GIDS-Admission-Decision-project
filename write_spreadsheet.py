@@ -389,6 +389,17 @@ def main(data_path=r"./ROUND 1 Reviews/"):
         },
     )
 
+    #highlighing 'university of rochester'
+    worksheet.conditional_format(
+        f"AB2:AB{row}",
+        {
+            "type": "text",
+            "criteria": "containing",
+            "value": "University of Rochester",
+            "format": green_format,
+        },
+    ) 
+
     workbook.close()
     logging.info("Done.")
 
