@@ -26,12 +26,14 @@ from util_vars import (
 gpa_pattern = re.compile(r"\d.[\d]+")
 
 
-def assign_scholarship(gpa):
+def assign_scholarship(gpa, citizenship, school):
     scholarship = None
     try:
         gpa = float(gpa)
     except (ValueError, TypeError):
         return scholarship
+
+    # Check GPA
     if gpa >= 4.0:
         pass
     elif gpa > 3.8:
@@ -42,6 +44,11 @@ def assign_scholarship(gpa):
         scholarship = "30%"
     elif gpa > 3.0:
         scholarship = "25%"
+
+    #check citizenship and school, does not matter for GPA
+    if citizenship == "United States" or school == "University of Rochester":
+        scholarship = "50%"
+
     return scholarship
 
 
@@ -143,18 +150,17 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
 
             reviewers_needed = 2
             if (
-                re.search("only one", data["Reader 2 Name"], re.IGNORECASE) is not None
-                or re.search("only one", data["Reader 1 Name"], re.IGNORECASE)
+                re.search("high GPA.*?", data["Reader 2 Name"], re.IGNORECASE) is not None
+                or re.search("high GPA.*?", data["Reader 1 Name"], re.IGNORECASE)
                 is not None
             ):
                 reviewers_needed = 1
                 review_case = "only_one"
                 recommeneded_action = decision_matrix[review_case][rating]
             elif (
-                re.search("2nd rev.*?needed", data["Reader 2 Name"], re.IGNORECASE)
-                is not None
-                or re.search("2nd rev.*?needed", data["Reader 1 Name"], re.IGNORECASE)
-                is not None
+                ##here
+                re.search("low GPA.*?", data["Reader 2 Name"], re.IGNORECASE) is not None
+                or re.search("low GPA.*?", data["Reader 1 Name"], re.IGNORECASE) is not None
             ):
                 reviewers_needed = 1
                 review_case = "2nd_rev_if_needed"
@@ -198,7 +204,7 @@ def make_admission_recommendation(record: dict, applicant_records: dict) -> None
         #Handle special cases
         scholarship = None
         if recommeneded_action == "Admit":
-            scholarship = assign_scholarship(applicant_records[applicant_id]["GPA 1"])
+            scholarship = assign_scholarship(applicant_records[applicant_id]["GPA 1"], applicant_records[applicant_id]["Citizenship 1"], applicant_records[applicant_id]["School 1"])
             if applicant_records[applicant_id]["Data Structures course"] == "No":
                 recommeneded_action = "Admit - Summer"
         #Update Applicant Records with Recommendations

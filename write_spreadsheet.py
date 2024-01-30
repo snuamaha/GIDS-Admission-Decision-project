@@ -117,6 +117,14 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     # Fill in the values
     row += 1
     for ref, info in applicant_records.items():
+
+        # Call assign_scholarship with GPA, citizenship, and school
+        #scholarship = assign_scholarship(
+        #    info.get("GPA 1", ""),
+        #    info.get("Citizenship", ""),
+        #    info.get("School 1", ""),
+        #)
+
         col = 0
         worksheet.write(int(row), col, ref, header_format)
         col += 1
