@@ -104,9 +104,6 @@ def main(data_path=r"./ROUND 1 Reviews/"):
         worksheet.write(row, col, renamed_header, header_format)
         col += 1
 
-
-    #worksheet.write(row, col, "Gap", header_format)
-
     #col += 1
     for header in selected_cols:
         if header in headers1:
@@ -117,13 +114,6 @@ def main(data_path=r"./ROUND 1 Reviews/"):
     # Fill in the values
     row += 1
     for ref, info in applicant_records.items():
-
-        # Call assign_scholarship with GPA, citizenship, and school
-        #scholarship = assign_scholarship(
-        #    info.get("GPA 1", ""),
-        #    info.get("Citizenship", ""),
-        #    info.get("School 1", ""),
-        #)
 
         col = 0
         worksheet.write(int(row), col, ref, header_format)
@@ -265,8 +255,6 @@ def main(data_path=r"./ROUND 1 Reviews/"):
                 worksheet.write(int(row), col, values)
 
             col += 1
-
-        #col += 1  # Mind the gap!
 
         for field in selected_cols:
             if field not in headers1:
